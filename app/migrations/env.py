@@ -1,13 +1,14 @@
 import sys
 from os.path import dirname, abspath
+
+sys.path.insert(0, dirname(dirname(abspath(__file__))))
+
 from logging.config import fileConfig
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 from alembic import context
-
-sys.path.insert(0, dirname(dirname(abspath(__file__))))
-
-from app.database import Base, DATABASE_URL
+from app.config import DATABASE_URL
+from app.database import Base
 from app.chat.models import Messages
 from app.users.models import Users
 

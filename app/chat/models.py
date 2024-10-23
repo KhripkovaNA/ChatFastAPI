@@ -4,7 +4,6 @@ from app.database import Base
 
 
 class Messages(Base):
-    __tablename__ = 'messages'
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     sender_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
