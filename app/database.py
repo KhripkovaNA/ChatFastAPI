@@ -1,11 +1,11 @@
 from datetime import datetime
 from sqlalchemy import func
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker, AsyncAttrs
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from app.config import DATABASE_URL
+from app.config import settings
 
-engine = create_async_engine(DATABASE_URL)
-
+database_url = settings.DATABASE_URL
+engine = create_async_engine(database_url)
 async_session_maker = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 
@@ -23,7 +23,7 @@ def connection(method):
     return wrapper
 
 
-class Base(DeclarativeBase):
+class Base(AsyncAttrs, DeclarativeBase):
     __abstract__ = True
 
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
