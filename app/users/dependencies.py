@@ -1,6 +1,7 @@
 from fastapi import Request, HTTPException, status, Depends, WebSocket
 from jose import jwt, JWTError
 from datetime import datetime, timezone
+from loguru import logger
 from app.chat.dependencies import active_connections
 from app.config import get_auth_data
 from app.errors.exceptions import TokenExpiredException, NoJwtException, NoUserIdException, TokenNoFoundException
@@ -20,6 +21,7 @@ def get_token(request: Request = None,
 
     if not token:
         raise TokenNoFoundException
+
     return token
 
 
@@ -29,7 +31,7 @@ async def get_user_from_db(user_id: int) -> dict:
     return SUserRead.model_validate(user).model_dump()
 
 
-async def get_current_user(token: str = Depends(get_token)) -> SUserRead:
+async def get_current_user(token: str = Depends(get_token), is_admin: bool = False) -> SUserRead:
     try:
         auth_data = get_auth_data()
         payload = jwt.decode(token, auth_data['secret_key'], algorithms=auth_data['algorithm'])
@@ -48,6 +50,10 @@ async def get_current_user(token: str = Depends(get_token)) -> SUserRead:
     user = await get_user_from_db(int(user_id))
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='User not found')
+    if is_admin:
+        if user["role"] != "admin":
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Admin user not found')
+
     return SUserRead(**user)
 
 

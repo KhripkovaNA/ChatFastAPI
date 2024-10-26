@@ -9,8 +9,8 @@ class Settings(BaseSettings):
     SECRET_KEY: str
     ALGORITHM: str
 
-    DB_HOST: str = "localhost"
-    DB_PORT: int = 5432
+    DB_HOST: str
+    DB_PORT: int
     DB_NAME: str
     DB_USER: str
     DB_PASS: str
@@ -19,8 +19,11 @@ class Settings(BaseSettings):
     POSTGRES_USER: str
     POSTGRES_PASSWORD: str
 
-    REDIS_HOST: str = "localhost"
-    REDIS_PORT: int = 6379
+    REDIS_HOST: str
+    REDIS_PORT: int
+
+    ADMIN_EMAIL: str
+    ADMIN_PASSWORD: str
 
     FORMAT_LOG: str = "{time:YYYY-MM-DD at HH:mm:ss} | {level} | {message}"
     LOG_ROTATION: str = "10 MB"

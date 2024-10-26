@@ -4,7 +4,7 @@ from jose import jwt
 from datetime import datetime, timedelta, timezone
 from app.config import get_auth_data
 from app.users.dao import UsersDAO
-from app.users.schemas import SUserAuth, SUserMail
+from app.users.schemas import SUserMail
 
 
 def create_access_token(data: dict) -> str:

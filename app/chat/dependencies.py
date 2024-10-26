@@ -1,5 +1,8 @@
 from fastapi import WebSocket
 import asyncio
+
+from loguru import logger
+
 from app.bot.bot import send_message_by_user_id
 from app.chat.dao import MessagesDAO
 from app.chat.schemas import SMessageCreate, SMessageAdd
@@ -14,33 +17,40 @@ active_connections: dict[int, WebSocket] = {}
 async def receive_message(message: SMessageCreate, sender: SUserRead) -> list[dict[str, str | int]]:
     # Подготавливаем данные для сохранения и последующей отправки сообщения
     message_data = []
+    recipient_id = int(message['recipient_id'])
 
-    # Добавляем новое сообщение в базу данных
-    if int(message['recipient_id']) == 0:
-        if sender.role != 'admin':
-            return []
-        # Сообщение всем активным пользователям
-        for recipient_id in active_connections:
-            if recipient_id == sender.id:
-                continue
-            mes = SMessageAdd(
-                sender_id=sender.id,
-                recipient_id=recipient_id,
-                content=message['content'],
-            )
+    def form_mes(sender_, recipient, content):
+        return SMessageAdd(
+            sender_id=sender_,
+            recipient_id=recipient,
+            content=content,
+        )
+
+    if recipient_id in [-1, 0]:
+        if recipient_id == -1:
+            # Сообщение всем пользователям
+            all_users = await UsersDAO.find_all()
+            recipients = [user.id for user in all_users]
+        else:
+            # Сообщение всем активным пользователям
+            recipients = active_connections
+
+        for user_id in recipients:
+            if user_id == sender.id:
+                continue  # Пропускаем отправителя
+            mes = form_mes(sender.id, user_id, message['content'])
             message_data.append(mes)
+
     else:
         # Сообщение одному конкретному пользователю
-        mes = SMessageAdd(
-            sender_id=sender.id,
-            recipient_id=message['recipient_id'],
-            content=message['content'],
-        )
+        mes = form_mes(sender.id, recipient_id, message['content'])
         message_data.append(mes)
 
     await MessagesDAO.add_many(instances=message_data)
 
-    return [item.model_dump() for item in message_data]
+    messages = [item.model_dump() for item in message_data]
+    logger.info(f"{recipient_id}: {messages}")
+    return messages
 
 
 async def send_message(message: dict) -> None:

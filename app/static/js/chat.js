@@ -67,7 +67,6 @@ function connectWebSocket() {
     if (socket) socket.close();
 
     socket = new WebSocket(`ws://${window.location.host}/chat/ws`);
-//    socket = new WebSocket(`ws://${window.location.host}/chat/ws/${currentUserId}-${selectedUserId}`);
 
     socket.onopen = () => console.log('WebSocket соединение установлено');
 
@@ -91,21 +90,32 @@ function connectWebSocket() {
 async function sendMessage() {
     const messageInput = document.getElementById('messageInput');
     const message = messageInput.value.trim();
-    let to_all = false
-    if (message === null) {
+    let recipient_id;
+
+    if (!message) { // Если сообщение пустое, выходим из функции
         return;
     }
-    if (currentUserRole === "admin" && document.getElementById('to_all').checked) {
-        to_all = true;
+    // Проверяем роль пользователя и состояние чекбоксов
+    const to_all = currentUserRole === "admin" && document.getElementById('to_all').checked;
+    const to_active = currentUserRole === "admin" && document.getElementById('to_all_active').checked;
+    console.log(currentUserRole)
+
+    // Устанавливаем recipient_id в зависимости от выбранных вариантов
+    if (to_all) {
+        recipient_id = -1; // Отправить всем
+    } else if (to_active) {
+        recipient_id = 0; // Отправить всем активным
+    } else {
+        recipient_id = selectedUserId; // Отправить конкретному пользователю
     }
-    const recipient_id = to_all ? 0 : selectedUserId
+
     const payload = {recipient_id: recipient_id, content: message};
     try {
         socket.send(JSON.stringify(payload));
         if (selectedUserId) {
             addMessage(message, currentUserId);
         }
-        messageInput.value = '';
+        messageInput.value = ''; // Очищаем поле ввода
     } catch (error) {
         console.error('Ошибка при отправке сообщения:', error);
     }
@@ -248,17 +258,23 @@ document.getElementById('messageInput').onkeypress = async (e) => {
 };
 
 if (currentUserRole === "admin") {
-    document.getElementById('to_all').addEventListener('change', function() {
-          if (this.checked) {
-               document.getElementById('messageInput').disabled = false;
-               document.getElementById('sendButton').disabled = false;
-          } else {
-            if (selectedUserId === null) {
-               document.getElementById('messageInput').disabled = true;
-               document.getElementById('sendButton').disabled = true;
-            }
-          }
-        });
+    const toAllCheckbox = document.getElementById('to_all');
+    const toActiveCheckbox = document.getElementById('to_all_active');
+    const messageInput = document.getElementById('messageInput');
+    const sendButton = document.getElementById('sendButton');
+
+    function toggleMessageInput() {
+        if (toAllCheckbox.checked || toActiveCheckbox.checked || selectedUserId !== null) {
+            messageInput.disabled = false;
+            sendButton.disabled = false;
+        } else {
+            messageInput.disabled = true;
+            sendButton.disabled = true;
+        }
+    }
+
+    toAllCheckbox.addEventListener('change', toggleMessageInput);
+    toActiveCheckbox.addEventListener('change', toggleMessageInput);
 }
 
 connectWebSocket();

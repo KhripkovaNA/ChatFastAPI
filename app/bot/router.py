@@ -17,7 +17,7 @@ async def bot_webhook(
         update: dict,
         x_telegram_bot_api_secret_token: Annotated[str | None, Header()] = None
 ) -> None | dict:
-    """ Register webhook endpoint for telegram bot"""
+    # Регистрация эндпоинта webhook для Телеграм-бота
     if x_telegram_bot_api_secret_token != cfg.telegram_my_token:
         logger.error("Неверный secret token")
         return {"status": "error", "message": "Wrong secret token!"}

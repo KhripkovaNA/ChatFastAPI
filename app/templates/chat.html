@@ -43,6 +43,10 @@
             <button id="sendButton" disabled>Отправить</button>
             {% if user.role == "admin" %}
                 <div>
+                    <input type="checkbox" id="to_all_active" name="to_all_active" />
+                    <label for="to_all_active">Всем активным</label>
+                </div>
+                <div>
                     <input type="checkbox" id="to_all" name="to_all" />
                     <label for="to_all">Всем</label>
                 </div>
@@ -54,7 +58,8 @@
 <script>
     // Передаем идентификатор текущего пользователя в JavaScript
     const currentUserId = parseInt("{{ user.id }}", 10);
-    const currentUserRole = "{{ user.role }}";
+    const currentUserRole = "{{ user.role.split('.').pop() }}";
+    console.log(currentUserRole);
 </script>
 
 <script src="/static/js/chat.js"></script>

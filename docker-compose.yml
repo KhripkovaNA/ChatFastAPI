@@ -1,0 +1,59 @@
+networks:
+  net:
+
+services:
+  db:
+    image: postgres:16
+    container_name: db_chat
+    command: -p 5434
+    expose:
+      - 5434
+    env_file:
+      - .env
+    networks:
+      - net
+
+  redis:
+    image: redis:7
+    container_name: redis_chat
+    networks:
+      - net
+
+  app:
+    build:
+      context: .
+    env_file:
+      - .env
+    container_name: chat_app
+    command: ["/chat/docker/app.sh"]
+    ports:
+      - 8000:8000
+    depends_on:
+      - db
+      - redis
+    networks:
+      - net
+
+  celery:
+    build:
+      context: .
+    env_file:
+      - .env
+    container_name: celery_chat
+    command: ["/chat/docker/celery.sh"]
+    depends_on:
+      - redis
+    networks:
+      - net
+
+  nginx:
+    image: nginx:stable-alpine
+    ports:
+      - 8080:80
+    volumes:
+      - './nginx.conf:/etc/nginx/nginx.conf'
+    depends_on:
+      - db
+      - app
+    networks:
+      - net

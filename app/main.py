@@ -63,4 +63,3 @@ async def log_requests(request: Request, call_next):
     # Логируем ответ
     logger.info(f"Response status: {response.status_code}")
     return response
-

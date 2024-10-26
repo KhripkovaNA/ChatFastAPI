@@ -59,7 +59,7 @@ async def auth_user(response: Response, user_data: SUserAuth):
         filters = SUserMail(email=user_data.email)
         values = STelegramID(tg_id=user_data.tg_id)
         await UsersDAO.update(filters, values)
-    access_token = create_access_token({"sub": str(check.id)})
+    access_token = create_access_token({"sub": str(check.id), "role": str(check.role)})
     response.set_cookie(key="users_access_token", value=access_token, httponly=True)
     return {'ok': True, 'access_token': access_token, 'refresh_token': None, 'message': 'Авторизация успешна!'}
 

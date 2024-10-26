@@ -1,10 +1,9 @@
-from typing import TypeVar, Generic, List, Any
+from typing import TypeVar, Generic, List, Optional
 from pydantic import BaseModel
-from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import update as sqlalchemy_update, delete as sqlalchemy_delete, func
-from app.database import async_session_maker, connection
+from app.database import connection
 from app.database import Base
 from loguru import logger
 
@@ -40,14 +39,18 @@ class BaseDAO(Generic[T]):
 
     @classmethod
     @connection
-    async def find_all(cls, session: AsyncSession, filters: BaseModel):
-        # Найти все записи по фильтрам
-        filter_dict = filters.model_dump(exclude_unset=True)
-        query = select(cls.model).filter_by(**filter_dict)
+    async def find_all(cls, session: AsyncSession, filters: Optional[BaseModel] = None):
+        # Если фильтры не заданы, получаем все записи
+        if filters is None:
+            query = select(cls.model)
+        else:
+            # Найти все записи по фильтрам
+            filter_dict = filters.model_dump(exclude_unset=True)
+            query = select(cls.model).filter_by(**filter_dict)
         result = await session.execute(query)
         records = result.scalars().all()
         if not records:
-            logger.info(f"Не найдено записей {cls.model.__name__} по фильтрам: {filter_dict}")
+            logger.info(f"Не найдено записей {cls.model.__name__}")
         return records
 
     @classmethod
